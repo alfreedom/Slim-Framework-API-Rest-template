@@ -16,10 +16,16 @@ $app->add(new \Tuupola\Middleware\JwtAuthentication([
         $data["message"] = $arguments["message"];
         return $response->withJson($data, 401);
     },
-    "callback" => function ($request, $response, $arguments) use ($container) // Callback en caso de que se autentique correctamente
+    "before" => function ($request, $response, $arguments) use ($container) // Callback en caso de que se autentique correctamente
     {
         // Guarda los datos del token desencriptados para poder se usado en los controladores
         // con la propiedad auth de $container
         $container['auth'] = $arguments['decoded'];
     }
 ]));
+
+// Middleware para agregar el token JWT del request al contenedor.
+$app->add(function ($request, $response, $next) use ($container) {
+    $container['auth_token'] = str_replace('Bearer ','', $request->getHeader('HTTP_AUTHORIZATION'));
+    return $next($request, $response);
+});
